@@ -36,8 +36,13 @@ class ThompsonSamplingBase:
         for i in range(len(self.contents_ctr)):
             self.time_decays[i] += 1
 
-    def update_arms(self, cluster_decay_size):
+    def update_arms(self, cluster_decay_size, topk):
         pass
+
+    def generate_random_click(self):
+        click = np.random.choice(self.candidates, p = self.norm_contents_ctr)
+        
+        return click
 
     def add_new_cluster(self, candidates):
         self.contents_ctr = np.concatenate([self.contents_ctr, candidates])
@@ -71,7 +76,7 @@ class ThompsonSamplingBase:
 
         for i in range(iterations):
 
-            recommend = self.update_arms(cluster_decay_size = cluster_decay_size)
+            recommend = self.update_arms(cluster_decay_size = cluster_decay_size, topk = topk)
             self.update_regret(recommend)
 
             if i % (sec//grid_size) == 0:
@@ -132,11 +137,6 @@ class DirichletThompsonSampling(ThompsonSamplingBase):
 
         return recommend[:topk]
 
-    def generate_random_click(self):
-        click = np.random.choice(self.candidates, p = self.norm_contents_ctr)
-        
-        return click
-
     def update_arms(self, cluster_decay_size = np.exp(1), topk = 3):
         updated_prior = self.cluster_decay(cluster_decay_size)
 
@@ -187,11 +187,6 @@ class BetaThompsonSampling(ThompsonSamplingBase):
         recommend = rewards.argsort()[::-1]
 
         return recommend[:topk]
-
-    def generate_random_click(self):
-        click = np.random.choice(self.candidates, p=self.norm_contents_ctr)
-
-        return click
 
     def update_arms(self, cluster_decay_size = np.exp(1), topk = 3):
         updated_alpha, updated_beta = self.cluster_decay(cluster_decay_size)
