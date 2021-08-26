@@ -52,13 +52,13 @@ class ThompsonSamplingBase:
         self.cluster_idx.append(len(self.contents_ctr))
 
     def update_regret(self, selected_arms):
-        maximum_reward = self.norm_contents_ctr[selected_arms].max()
-        regret = self.norm_contents_ctr.max() - maximum_reward
+        # maximum_reward = self.norm_contents_ctr[selected_arms].max()
+        # regret = self.norm_contents_ctr.max() - maximum_reward
 
-        # selected_sum = self.norm_contents_ctr[selected_arms].sum()
-        # topk = len(selected_arms)
-        # topk_sum = np.partiton(self.norm_contents_ctr, -topk)[-topk:].sum()
-        # regret = topk_sum - selected_sum
+        selected_sum = self.norm_contents_ctr[selected_arms].sum()
+        topk = len(selected_arms)
+        topk_sum = np.partition(self.norm_contents_ctr, -topk)[-topk:].sum()
+        regret = topk_sum - selected_sum
         
         self.regrets.append(regret)
 
