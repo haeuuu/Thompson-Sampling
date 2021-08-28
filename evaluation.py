@@ -7,10 +7,17 @@ import matplotlib.colors as mcolors
 
 from thompson_sampling import *
 
-def evaluate(model, contents_ctr, experiments, **mab_parameters):
+def evaluate(model, contents_ctr, experiments, **params):
+    model_parameters, mab_parameters = {}, {}
+    for key in list(params.keys()):
+        if key.startswith('_'):
+            model_parameters[key[1:]] = params.pop(key)
+        else:
+            mab_parameters[key] = params.pop(key)
+
     _regrets = []
     for e in tqdm(range(experiments)):
-        m = model(contents_ctr)
+        m = model(contents_ctr, **model_parameters)
         m.run(**mab_parameters)
         _regrets.append(m.regrets)
 
