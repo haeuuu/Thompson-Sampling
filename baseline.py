@@ -1,10 +1,6 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from itertools import cycle
-from scipy import stats
 
-from thompson_sampling import ThompsonSamplingBase
-
+from thompson_sampling import *
 
 class ThompsonSampling(ThompsonSamplingBase):
     def __init__(self, contents_ctr):
@@ -47,7 +43,7 @@ class DiscountedThompsonSampling(ThompsonSamplingBase):
         self.gamma = gamma
 
     def __str__(self):
-        return 'discounted TS'
+        return 'discounted TS (Beta prior)'
 
     def discount(self):
         self.alpha *= self.gamma
@@ -82,14 +78,14 @@ class DiscountedThompsonSampling(ThompsonSamplingBase):
         self.beta = np.concatenate([self.beta, np.zeros_like(candidates)])
 
 class DirichletDiscountedTS(ThompsonSamplingBase):
-    def __init__(self, contents_ctr, prior_init = 0.5, gamma = 0.9):
+    def __init__(self, contents_ctr, prior_init = 1. , gamma = 0.9):
         super().__init__(contents_ctr)
         self.prior = np.zeros_like(self.contents_ctr)
-        self.prior_init = 1
+        self.prior_init = prior_init
         self.gamma = gamma
 
     def __str__(self):
-        return 'Dirichlet discounted TS'
+        return 'discounted TS (Dirichlet prior)'
 
     def discount(self):
         self.prior *= self.gamma
@@ -104,8 +100,6 @@ class DirichletDiscountedTS(ThompsonSamplingBase):
         
         recommend = self.draw(topk)
         click = self.generate_random_click()
-
-        self.discount()
 
         for i in recommend:
             self.selected[i] += 1
@@ -122,11 +116,25 @@ class DiscountedOptimisticThompsonSampling(DiscountedThompsonSampling):
         super().__init__(contents_ctr, alpha_init, beta_init, gamma)
 
     def __str__(self):
-        return 'dicounted Optimistic TS'
+        return 'discounted Optimistic TS (Beta prior)'
 
     def draw(self, topk):
         rewards = np.random.beta(self.alpha + self.alpha_init, self.beta + self.beta_init)
         mean = self.alpha / (self.alpha + self.beta)
+        recommend = np.maximum(rewards, mean).argsort()[::-1]
+
+        return recommend[:topk]
+
+class DirichletDOTS(DiscountedThompsonSampling):
+    def __init__(self, contents_ctr, prior_init = 0.5, gamma = 0.9):
+        super().__init__(contents_ctr, prior_init, gamma)
+
+    def __str__(self):
+        return 'discounted Optimistic TS (Dirichlet prior)'
+
+    def draw(self, topk):
+        rewards = np.random.dirichlet(self.prior + self.prior_init, 1)[0]
+        mean = self.prior / self.prior.sum()
         recommend = np.maximum(rewards, mean).argsort()[::-1]
 
         return recommend[:topk]
